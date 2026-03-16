@@ -1747,9 +1747,9 @@ struct MenuBarView: View {
 
             SHCard {
                 VStack(alignment: .leading, spacing: 8) {
-                    SHLabel("Install")
-                    Text("npm install -g @anthropic/claude-mem")
-                        .font(.system(size: 11, design: .monospaced))
+                    SHLabel("In Claude Code, run:")
+                    Text("/plugin marketplace add thedotmack/claude-mem")
+                        .font(.system(size: 10.5, design: .monospaced))
                         .textSelection(.enabled)
                         .padding(8)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -1757,9 +1757,8 @@ struct MenuBarView: View {
                             RoundedRectangle(cornerRadius: 6, style: .continuous)
                                 .fill(Color.primary.opacity(0.03))
                         )
-                    SHLabel("Enable")
-                    Text("claude mcp add claude-mem -- claude-mem")
-                        .font(.system(size: 11, design: .monospaced))
+                    Text("/plugin install claude-mem")
+                        .font(.system(size: 10.5, design: .monospaced))
                         .textSelection(.enabled)
                         .padding(8)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -1767,6 +1766,9 @@ struct MenuBarView: View {
                             RoundedRectangle(cornerRadius: 6, style: .continuous)
                                 .fill(Color.primary.opacity(0.03))
                         )
+                    Text("Then restart Claude Code.")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
                 }
             }
 
