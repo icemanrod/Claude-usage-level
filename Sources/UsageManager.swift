@@ -624,7 +624,10 @@ class UsageManager: ObservableObject {
         }
 
         if isAuthenticated {
-            refresh()
+            // Delay first API call to avoid racing with Claude Code on startup
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+                self?.refresh()
+            }
         }
 
         refreshStats()

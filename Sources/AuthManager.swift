@@ -91,17 +91,27 @@ class AuthManager: ObservableObject {
         return Date().addingTimeInterval(5 * 60) >= expiresDate
     }
 
-    /// Reload credentials from disk/keychain instead of refreshing the token ourselves.
-    /// Claude Code manages the OAuth refresh cycle — if we use the single-use refresh token,
-    /// we invalidate Claude Code's copy and the user has to `claude login` again.
+    /// Reload credentials from disk only (not keychain) to avoid interfering with Claude Code.
+    /// Claude Code manages the OAuth refresh cycle — we should not compete for keychain access.
     func reloadCredentials(completion: @escaping (Bool) -> Void) {
         let previousToken = accessToken
-        loadCredentials()
+
+        // Only try the file, not keychain — avoid racing with Claude Code's keychain access
+        if let data = try? Data(contentsOf: Self.credentialsPath),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let oauth = json["claudeAiOauth"] as? [String: Any],
+           let token = oauth["accessToken"] as? String, !token.isEmpty {
+            accessToken = token
+            refreshToken = oauth["refreshToken"] as? String
+            tokenExpiresAt = oauth["expiresAt"] as? Double
+            subscriptionType = oauth["subscriptionType"] as? String ?? ""
+            credentialSource = .file
+            isAuthenticated = true
+        }
+
         let changed = accessToken != previousToken && isAuthenticated
         if changed {
-            Log.info("Credentials reloaded from \(credentialSource.rawValue)")
-        } else {
-            Log.info("Credentials unchanged after reload")
+            Log.info("Credentials reloaded from file")
         }
         completion(isAuthenticated)
     }

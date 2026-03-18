@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.18.1] - 2026-03-18
+
+### Fixed
+- Delay first API call by 3s on startup to avoid racing with Claude Code
+- `reloadCredentials` no longer reads Keychain — only reads file to avoid interfering with Claude Code's keychain access
+- Reduces risk of invalidating Claude Code's OAuth session on app launch
+
 ## [2.18.0] - 2026-03-17
 
 ### Added
