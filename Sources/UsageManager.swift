@@ -890,22 +890,30 @@ class UsageManager: ObservableObject {
 
     // MARK: - Actions
 
+    /// Manual refresh — always clears rate limit cooldown
     func refresh() {
+        rateLimitedUntil = nil
+        refreshInternal()
+    }
+
+    /// Auto-refresh — respects rate limit cooldown
+    func autoRefresh() {
+        if let until = rateLimitedUntil, Date() < until {
+            let remaining = Int(until.timeIntervalSince(Date()))
+            if remaining > 0 {
+                Log.info("Auto-refresh skipped, rate limited for \(remaining)s more")
+                return
+            }
+            rateLimitedUntil = nil
+        }
+        refreshInternal()
+    }
+
+    private func refreshInternal() {
         guard !isLoading else { return }
         guard isAuthenticated, auth.accessToken != nil else {
             errorMessage = "Not authenticated — run `claude login` in Terminal"
             return
-        }
-
-        // Respect rate limit cooldown
-        if let until = rateLimitedUntil, Date() < until {
-            let remaining = Int(until.timeIntervalSince(Date()))
-            if remaining > 0 {
-                errorMessage = "Rate limited — retry in \(remaining)s"
-                Log.info("Skipping refresh, rate limited for \(remaining)s more")
-                return
-            }
-            rateLimitedUntil = nil
         }
 
         if auth.tokenNeedsRefresh && auth.refreshToken != nil {
@@ -1053,10 +1061,11 @@ class UsageManager: ObservableObject {
                             }
                         }
                     } else if !self.quotas.isEmpty {
-                        // We have cached data — use Retry-After header if present
-                        let cooldown = retryAfterValue > 0 ? retryAfterValue : 30.0
+                        // We have cached data — cap cooldown to 60s max
+                        let cooldown = min(retryAfterValue > 0 ? retryAfterValue : 30.0, 60.0)
                         self.isLoading = false
                         self.rateLimitedUntil = Date().addingTimeInterval(cooldown)
+                        self.errorMessage = nil  // Don't show error, we have cached data
                         Log.info("Rate limited (429), keeping existing data, retry in \(Int(cooldown))s")
                     } else if retryCount < Self.maxRetries {
                         let delay = 5 * pow(2.0, Double(retryCount))
@@ -1182,7 +1191,7 @@ class UsageManager: ObservableObject {
         )
         .autoconnect()
         .sink { [weak self] _ in
-            self?.refresh()
+            self?.autoRefresh()
             self?.refreshStats()
         }
     }

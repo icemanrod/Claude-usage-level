@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.19.1] - 2026-03-21
+
+### Fixed
+- Manual refresh now always bypasses rate limit cooldown (no more stuck "Rate limited" requiring app restart)
+- Rate limit cooldown capped to 60s max
+- No error message shown when rate limited with cached data — displays existing quotas silently
+
 ## [2.19.0] - 2026-03-19
 
 ### Performance
