@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.19.4] - 2026-04-01
+
+### Fixed
+- Menu bar timer now shows session reset instead of weekly reset when usage is at 0%
+- Reset timer displays days/hours for long countdowns (e.g. `3d05h` instead of `77h05m`)
+
 ## [2.19.3] - 2026-03-31
 
 ### Fixed

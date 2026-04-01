@@ -164,8 +164,8 @@ git tag v2.8.0 && git push origin v2.8.0
 
 ## Changelog
 
-### v2.19.3
-- **Fixed**: Auto-refresh was off by default for new users, sleep/wake refresh, App Nap, popover stale data, isLoading stuck, 401 retry loop
+### v2.19.4
+- **Fixed**: Menu bar timer shows session reset (not weekly), days/hours format for long countdowns, auto-refresh default, sleep/wake refresh, App Nap
 
 ### v2.19.0
 - **Perf**: JSONL parsing without Data→String roundtrip, SQLite 9→4 queries, widget skip unchanged, keychain off main thread

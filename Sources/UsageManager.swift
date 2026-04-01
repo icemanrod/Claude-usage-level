@@ -397,7 +397,11 @@ class UsageManager: ObservableObject {
     }
 
     var nextResetDate: Date? {
-        quotas.compactMap(\.resetsAt)
+        // Use primary quota's reset date (session), falling back to nearest reset across all quotas
+        if let primary = primaryQuota?.resetsAt, primary.timeIntervalSinceNow > 0 {
+            return primary
+        }
+        return quotas.compactMap(\.resetsAt)
             .filter { $0.timeIntervalSinceNow > 0 }
             .min()
     }
@@ -1180,21 +1184,28 @@ class UsageManager: ObservableObject {
             }
             return
         }
-        let hours = Int(remaining) / 3600
+        let days = Int(remaining) / 86400
+        let hours = (Int(remaining) % 86400) / 3600
         let minutes = (Int(remaining) % 3600) / 60
         let newValue: String
         if menuBarDisplayMode == .percentageAndTimer {
-            // Keep menu bar compact: skip seconds when > 1h
-            if hours > 0 {
+            // Keep menu bar compact
+            if days > 0 {
+                newValue = "\(days)d\(String(format: "%02d", hours))h"
+            } else if hours > 0 {
                 newValue = "\(hours)h\(String(format: "%02d", minutes))m"
             } else {
                 let seconds = Int(remaining) % 60
                 newValue = "\(minutes)m\(String(format: "%02d", seconds))s"
             }
         } else {
-            newValue = hours > 0
-                ? "\(hours)h \(minutes)m"
-                : "\(minutes)m"
+            if days > 0 {
+                newValue = "\(days)d \(hours)h"
+            } else if hours > 0 {
+                newValue = "\(hours)h \(minutes)m"
+            } else {
+                newValue = "\(minutes)m"
+            }
         }
         if timeUntilReset != newValue { timeUntilReset = newValue }
     }
