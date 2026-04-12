@@ -1170,9 +1170,9 @@ class UsageManager: ObservableObject {
                 case 429:
                     let retryAfterHeader = httpResponse.value(forHTTPHeaderField: "Retry-After")
                     let retryAfterValue = retryAfterHeader.flatMap(Double.init) ?? -1
-                    let isLikelyStaleToken = retryAfterValue == 0
 
-                    if isLikelyStaleToken && self.auth.refreshToken != nil && retryCount == 0 {
+                    // Retry-After:0 on first attempt may indicate a stale token — try refreshing once
+                    if retryAfterValue == 0 && self.auth.refreshToken != nil && retryCount == 0 {
                         Log.info("429 with Retry-After:0 — likely stale token, refreshing...")
                         self.auth.reloadCredentials { [weak self] success in
                             guard let self else { return }
@@ -1186,13 +1186,15 @@ class UsageManager: ObservableObject {
                             }
                         }
                     } else {
-                        let cooldown = retryAfterValue > 0 ? retryAfterValue : 30.0
+                        // Respect server's Retry-After; floor at 120s when missing/zero
+                        // to avoid hammering the endpoint in a tight loop
+                        let cooldown = retryAfterValue > 0 ? retryAfterValue : 120.0
                         self.rateLimitedUntil = Date().addingTimeInterval(cooldown)
                         if !self.quotas.isEmpty {
                             self.finishLoading()
                             Log.info("Rate limited (429), keeping existing data, retry in \(Int(cooldown))s")
                         } else {
-                            self.finishLoading(error: "Rate limited — retrying in \(Int(cooldown))s")
+                            self.finishLoading(error: "Rate limited — retrying in \(Int(cooldown / 60))min")
                             Log.info("Rate limited (429), no data yet, will auto-retry in \(Int(cooldown))s")
                         }
                     }
