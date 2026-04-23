@@ -368,6 +368,13 @@ class UsageManager: ObservableObject {
         }
     }
 
+    @Published var autoReconnect: Bool {
+        didSet {
+            UserDefaults.standard.set(autoReconnect, forKey: UDKey.autoReconnect)
+        }
+    }
+    @Published var isAutoReconnecting = false
+
     @Published var menuBarDisplayMode: MenuBarDisplayMode {
         didSet {
             UserDefaults.standard.set(menuBarDisplayMode.rawValue, forKey: UDKey.menuBarDisplayMode)
@@ -659,6 +666,7 @@ class UsageManager: ObservableObject {
         self.notificationThreshold = ud.object(forKey: UDKey.notificationThreshold) as? Double ?? 20.0
         self.launchAtLogin = ud.bool(forKey: UDKey.launchAtLogin)
         self.compactMode = ud.bool(forKey: UDKey.compactMode)
+        self.autoReconnect = ud.bool(forKey: UDKey.autoReconnect)
         let savedHeight = ud.double(forKey: UDKey.windowHeight)
         self.windowHeight = savedHeight > 0 ? savedHeight : 650
         let savedDisplayMode = ud.integer(forKey: UDKey.menuBarDisplayMode)
@@ -738,6 +746,13 @@ class UsageManager: ObservableObject {
         auth.objectWillChange.sink { [weak self] _ in
             DispatchQueue.main.async {
                 guard let self else { return }
+                // Don't re-enter refresh loop while token is expired — causes rapid flicker
+                if self.auth.tokenExpired {
+                    if self.autoReconnect && !self.isAutoReconnecting {
+                        self.launchAutoReconnect()
+                    }
+                    return
+                }
                 if self.isAuthenticated && !self.isLoading && (self.quotas.isEmpty || self.errorMessage != nil) {
                     self.showSettings = false
                     self.refresh()
@@ -1018,6 +1033,63 @@ class UsageManager: ObservableObject {
                 self?.activeSessionCost = 0
                 self?.activeSessionMessages = 0
             }
+        }
+    }
+
+    // MARK: - Auto-reconnect
+
+    /// Launches `claude login` in the background, opening the browser OAuth flow.
+    /// The existing credentials file watcher picks up the new token automatically.
+    func launchAutoReconnect() {
+        guard !isAutoReconnecting else { return }
+        isAutoReconnecting = true
+        errorMessage = "Opening Terminal to sign in..."
+        Log.info("Auto-reconnect: opening Terminal with claude auth login")
+
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let candidatePaths = [
+            "/usr/local/bin/claude",
+            "/opt/homebrew/bin/claude",
+            "\(home)/.npm-global/bin/claude",
+            "\(home)/.local/bin/claude",
+            "/usr/bin/claude"
+        ]
+        guard let claudePath = candidatePaths.first(where: { FileManager.default.fileExists(atPath: $0) }) else {
+            Log.warn("claude binary not found — cannot auto-reconnect")
+            isAutoReconnecting = false
+            errorMessage = "Session expired — run `claude auth login` in Terminal"
+            return
+        }
+
+        // Run in Terminal so claude auth login has a proper TTY and can open the browser
+        let script = """
+        tell application "Terminal"
+            activate
+            do script "\(claudePath) auth login"
+        end tell
+        """
+        var appleScriptError: NSDictionary?
+        guard let appleScript = NSAppleScript(source: script) else {
+            isAutoReconnecting = false
+            errorMessage = "Session expired — run `claude auth login` in Terminal"
+            return
+        }
+        appleScript.executeAndReturnError(&appleScriptError)
+
+        if let err = appleScriptError {
+            Log.error("AppleScript error: \(err)")
+            isAutoReconnecting = false
+            errorMessage = "Session expired — run `claude auth login` in Terminal"
+            return
+        }
+
+        Log.info("Terminal opened with claude auth login — watching for new credentials")
+        // File watcher will pick up new credentials automatically once claude auth login completes
+        // Reset reconnecting state after a timeout so the button re-enables
+        DispatchQueue.main.asyncAfter(deadline: .now() + 120) { [weak self] in
+            guard let self, self.isAutoReconnecting else { return }
+            self.isAutoReconnecting = false
+            if !self.auth.tokenExpired { self.refresh() }
         }
     }
 
