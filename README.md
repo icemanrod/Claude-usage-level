@@ -164,6 +164,13 @@ git tag v2.8.0 && git push origin v2.8.0
 
 ## Changelog
 
+### v2.21.0
+- **New**: Session+Week menu bar mode — session %, reset countdown, and weekly % at a glance ([#15](https://github.com/Lcharvol/Claude-God/issues/15))
+- **New**: Resizable window with persisted height
+- **New**: Extra usage balance card + Claude Design quota row
+- **New**: Sign In button + opt-in auto-reconnect when OAuth token expires
+- **Fixed**: Usage tab flicker on expired token, long reset times shown as days/hours
+
 ### v2.20.4
 - **Fixed**: Hardened refresh pipeline — every exit path clears loading state, credential reload timeouts, backoff counter auto-resets
 

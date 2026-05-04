@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.21.0] - 2026-05-04
+
+### Added
+- **Session+Week menu bar mode** — new display option shows session %, time-to-reset, and weekly % at a glance (`15% · 2h31m | W 31%`) ([#15](https://github.com/Lcharvol/Claude-God/issues/15))
+- **Resizable window** — drag the bottom edge to set the panel height; persists across launches via `UserDefaults`
+- **Extra usage balance card** — new card in the usage view shows extra credits used and monthly limit (API returns cents, displayed as dollars)
+- **Claude Design quota row** — `seven_day_omelette` API field now parsed and rendered alongside Sonnet / Opus / Haiku
+- **Sign In button + auto-reconnect** — when the OAuth token expires, the error view and Settings show a "Sign In" button that opens Terminal with `claude auth login`. New opt-in toggle "Auto-reconnect when session expires" in Settings
+- **PTY-embedded `claude auth login`** — auth runs in a real PTY inside the popover for proper TTY behavior during the OAuth flow
+- **Silent OAuth self-refresh** — keeps the app online without user interaction while the refresh token is valid
+- **Debug: copy raw API response** — button in the About section copies the last raw OAuth usage JSON to the clipboard
+
+### Fixed
+- Usage tab no longer flickers when OAuth token is expired ([#7](https://github.com/Lcharvol/Claude-God/pull/7))
+- Long reset times now displayed as days/hours instead of raw hours
+- Window can shrink below content height for proper scrolling
+- Keychain is polled every 5s after `claude auth login` instead of relying solely on the file watcher
+- `claude auth login` opens Terminal instead of being spawned headless
+
 ## [2.20.4] - 2026-04-13
 
 ### Fixed
