@@ -698,7 +698,7 @@ struct MenuBarView: View {
                             .fill((manager.isPeakHours ? Color.orange : Color.indigo).opacity(0.05))
                     )
             )
-            .help("Peak hours: Mon–Fri 7am–5pm PT (US Pacific)")
+            .help("Peak hours: \(UsageManager.peakHoursDescription) (US Pacific)")
 
             // Live session cost
             if manager.isSessionActive && manager.activeSessionCost > 0 {
@@ -937,7 +937,7 @@ struct MenuBarView: View {
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundColor(.secondary)
             }
-            .help("Peak hours: Mon–Fri 7am–5pm PT")
+            .help("Peak hours: \(UsageManager.peakHoursDescription)")
 
             if let lastRefresh = manager.lastRefresh {
                 HStack {

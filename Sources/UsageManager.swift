@@ -516,10 +516,24 @@ class UsageManager: ObservableObject {
 
     // MARK: - Peak / Off-peak detection
 
-    /// Peak hours: weekdays 7am–5pm US Pacific (when most US users are active)
+    /// Peak hours: weekdays 5am–11am US Pacific. Anthropic's throttling window for 5-hour
+    /// session limits — overlap of US morning, European afternoon, and Asia evening demand
+    /// (announced 2026-03-26: https://x.com/trq212/status/2037254607001559305).
     private static let peakTimezone = TimeZone(identifier: "America/Los_Angeles")!
-    private static let peakStartHour = 7
-    private static let peakEndHour = 17
+    private static let peakStartHour = 5
+    private static let peakEndHour = 11
+
+    /// Human-readable peak window, derived from `peakStartHour` / `peakEndHour` so tooltips
+    /// stay in sync if the policy changes.
+    static var peakHoursDescription: String {
+        "Mon–Fri \(formatHour(peakStartHour))–\(formatHour(peakEndHour)) PT"
+    }
+
+    private static func formatHour(_ hour: Int) -> String {
+        let suffix = hour < 12 ? "am" : "pm"
+        let display = hour == 0 ? 12 : (hour <= 12 ? hour : hour - 12)
+        return "\(display)\(suffix)"
+    }
 
     var isPeakHours: Bool {
         let cal = Calendar.current
@@ -540,7 +554,7 @@ class UsageManager: ObservableObject {
         let now = Date()
 
         if isPeakHours {
-            // Currently peak → find when off-peak starts (5pm PT today)
+            // Currently peak → find when off-peak starts (11am PT today)
             var comps = pacificCal.dateComponents([.year, .month, .day], from: now)
             comps.hour = Self.peakEndHour
             comps.minute = 0
@@ -569,7 +583,7 @@ class UsageManager: ObservableObject {
                 } else if currentWeekday == 1 { // Sunday
                     daysUntilPeak = 1
                 } else {
-                    // Weekday after 5pm → next weekday morning
+                    // Weekday after 11am → next weekday morning
                     daysUntilPeak = currentWeekday == 6 ? 3 : 1 // Friday → Monday, else tomorrow
                 }
             }

@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+- **Peak hours window updated to Anthropic's new 5am–11am PT band** — reflects the policy change announced 2026-03-26 where 5-hour session limits burn faster during weekdays 5am–11am Pacific (1pm–7pm GMT) due to overlapping US-morning, European-afternoon, and Asia-evening demand. Tooltips and transition countdowns now derive from a single `peakHoursDescription` source-of-truth on `UsageManager` ([#24](https://github.com/Lcharvol/Claude-God/pull/24))
+
 ## [2.22.1] - 2026-05-26
 
 ### Fixed
