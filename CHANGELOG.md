@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.23.3] - 2026-06-08
+
+### Fixed
+- **No more "Claude God wants to access the keychain" prompt for the common case** — v2.23.2's Keychain scan used the Security framework directly, which triggers macOS's keychain access dialog the first time an ad-hoc-signed app reads an item it didn't create. `loadFromKeychain` now tries `/usr/bin/security find-generic-password -s "Claude Code-credentials" -a $USER` as a second fast path before calling `SecItemCopyMatching` — the shelled-out binary has its own trusted keychain access, so single-user installs (the vast majority) resolve cleanly without any prompt. The Security-framework scan only runs as a last resort for unusual multi-account / suffixed-entry layouts
+
 ## [2.23.2] - 2026-06-08
 
 ### Fixed

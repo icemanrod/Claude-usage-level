@@ -308,13 +308,42 @@ class AuthManager: ObservableObject {
     // MARK: - Keychain
 
     /// Load credentials from Keychain.
-    /// Fast path: exact "Claude Code-credentials" service. If missing or expired,
-    /// falls back to scanning all entries with that prefix (covers per-project
-    /// suffixed entries written by newer Claude Code versions).
+    ///
+    /// Tries cheap, non-prompting `/usr/bin/security` shell-outs first (no keychain
+    /// access dialog), and only falls back to the direct Security framework API —
+    /// which can trigger a one-time "Claude God wants to access the keychain"
+    /// prompt — when those fail. Most users have an entry whose account matches
+    /// `$USER`, so the per-account fast path resolves cleanly without any prompt.
+    ///
+    /// Order:
+    ///   1. `security find-generic-password -s "Claude Code-credentials"` (no `-a`)
+    ///   2. `security find-generic-password -s "Claude Code-credentials" -a $USER`
+    ///   3. `SecItemCopyMatching` scan over all `Claude Code-credentials*` entries
+    ///      (covers per-project suffixed entries from newer Claude Code versions)
     static func loadFromKeychain() -> [String: Any]? {
+        if let json = readKeychainViaSecurityCLI(service: "Claude Code-credentials", account: nil),
+           hasFreshOAuthToken(json) {
+            return json
+        }
+
+        let user = NSUserName()
+        if !user.isEmpty,
+           let json = readKeychainViaSecurityCLI(service: "Claude Code-credentials", account: user),
+           hasFreshOAuthToken(json) {
+            return json
+        }
+
+        return loadBestKeychainEntryWithPrefix("Claude Code-credentials")
+    }
+
+    private static func readKeychainViaSecurityCLI(service: String, account: String?) -> [String: Any]? {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
-        process.arguments = ["find-generic-password", "-s", "Claude Code-credentials", "-w"]
+        var args = ["find-generic-password", "-s", service]
+        if let account = account { args.append(contentsOf: ["-a", account]) }
+        args.append("-w")
+        process.arguments = args
+
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = Pipe()
@@ -322,18 +351,24 @@ class AuthManager: ObservableObject {
         do {
             try process.run()
             process.waitUntilExit()
-            if process.terminationStatus == 0,
-               let trimmed = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
-                   .trimmingCharacters(in: .whitespacesAndNewlines),
-               !trimmed.isEmpty,
-               let jsonData = trimmed.data(using: .utf8),
-               let json = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
-                let expiresAt = (json["claudeAiOauth"] as? [String: Any])?["expiresAt"] as? Double ?? 0
-                if Date(timeIntervalSince1970: expiresAt / 1000) > Date() { return json }
-            }
-        } catch {}
+            guard process.terminationStatus == 0,
+                  let trimmed = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
+                      .trimmingCharacters(in: .whitespacesAndNewlines),
+                  !trimmed.isEmpty,
+                  let jsonData = trimmed.data(using: .utf8),
+                  let json = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any]
+            else { return nil }
+            return json
+        } catch {
+            return nil
+        }
+    }
 
-        return loadBestKeychainEntryWithPrefix("Claude Code-credentials")
+    private static func hasFreshOAuthToken(_ json: [String: Any]) -> Bool {
+        guard let oauth = json["claudeAiOauth"] as? [String: Any],
+              let token = oauth["accessToken"] as? String, !token.isEmpty,
+              let expiresAt = oauth["expiresAt"] as? Double else { return false }
+        return Date(timeIntervalSince1970: expiresAt / 1000) > Date()
     }
 
     private static func loadBestKeychainEntryWithPrefix(_ prefix: String) -> [String: Any]? {

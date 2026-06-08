@@ -164,6 +164,9 @@ git tag v2.8.0 && git push origin v2.8.0
 
 ## Changelog
 
+### v2.23.3
+- **Fixed**: No more "Claude God wants to access the keychain" prompt for the common case — v2.23.2's fallback hit the Security framework API directly (which prompts the first time an ad-hoc-signed app reads an item it didn't create). Now tries `security find-generic-password -a $USER` as a second non-prompting fast path before the API; the scan only runs for unusual multi-account layouts
+
 ### v2.23.2
 - **Fixed**: PR #27 Keychain fallback actually works now — the scan called `SecItemCopyMatching` with an attribute combination (`kSecReturnAttributes + kSecReturnData + kSecMatchLimitAll`) that returns `errSecParam (-50)` on the legacy login keychain, so it bailed out before reading anything. Now lists refs+attributes first, then fetches each item's data with a per-item query, so users with multiple `Claude Code-credentials` entries (Claude Code stores `account=unknown` next to `account=<user>`) finally connect
 
