@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.23.4] - 2026-06-15
+
+### Fixed
+- **Repeated "Claude God wants to use your confidential information stored in 'Claude Code-credentials-XXXXXXXX'" prompt** — newer Claude Code versions write credentials under a suffixed service name (e.g. `Claude Code-credentials-88d13be2`), and the per-entry data fetch in `loadBestKeychainEntryWithPrefix` was using `SecItemCopyMatching + kSecReturnData`. That call goes through the Security framework, which triggers the macOS keychain access dialog on every read — producing a dialog loop where "Allow" only suppresses one cycle. The fetch now reuses the existing `readKeychainViaSecurityCLI(service:account:)` helper (`/usr/bin/security find-generic-password` with the exact service name discovered from the non-prompting list query), which bypasses the Security-framework dialog entirely ([#30](https://github.com/Lcharvol/Claude-God/issues/30), [#31](https://github.com/Lcharvol/Claude-God/pull/31), thanks @nairdaleo)
+
 ## [2.23.3] - 2026-06-08
 
 ### Fixed

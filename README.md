@@ -164,6 +164,9 @@ git tag v2.8.0 && git push origin v2.8.0
 
 ## Changelog
 
+### v2.23.4
+- **Fixed**: Repeated "Claude God wants to use your confidential information stored in `Claude Code-credentials-XXXXXXXX`" prompt — newer Claude Code versions write credentials under suffixed service names, and the per-entry data fetch in `loadBestKeychainEntryWithPrefix` used `SecItemCopyMatching + kSecReturnData`, which prompts on every read. The fetch now reuses the existing `security find-generic-password` helper with the exact service name discovered from the non-prompting list query, so the dialog loop disappears ([#30](https://github.com/Lcharvol/Claude-God/issues/30), [#31](https://github.com/Lcharvol/Claude-God/pull/31), thanks @nairdaleo)
+
 ### v2.23.3
 - **Fixed**: No more "Claude God wants to access the keychain" prompt for the common case — v2.23.2's fallback hit the Security framework API directly (which prompts the first time an ad-hoc-signed app reads an item it didn't create). Now tries `security find-generic-password -a $USER` as a second non-prompting fast path before the API; the scan only runs for unusual multi-account layouts
 
