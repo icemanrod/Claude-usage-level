@@ -177,6 +177,14 @@ struct DailyUsage: Identifiable {
     }
 }
 
+struct PeriodBucket: Identifiable {
+    let id: String            // "2026-02" (month) or week-start "2026-02-24"
+    let label: String         // "Feb 2026" or "Feb 24–Mar 1"
+    let cost: Double
+    let messageCount: Int
+    let days: [DailyUsage]    // member days, newest-first
+}
+
 struct ProjectUsage: Identifiable {
     let id = UUID()
     let projectName: String
@@ -387,6 +395,59 @@ class SessionAnalyzer {
         f.dateFormat = "yyyy-MM-dd"
         return f
     }()
+
+    static let monthLabelFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM yyyy"
+        return f
+    }()
+
+    static let monthKeyFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM"
+        return f
+    }()
+
+    /// Group daily usage into calendar-month buckets, newest-first.
+    static func monthlyBuckets(from daily: [DailyUsage]) -> [PeriodBucket] {
+        let cal = Calendar.current
+        let groups = Dictionary(grouping: daily) { day in
+            cal.dateComponents([.year, .month], from: day.date)
+        }
+        return groups.compactMap { (comps, days) -> PeriodBucket? in
+            guard let monthDate = cal.date(from: comps) else { return nil }
+            let sorted = days.sorted { $0.date > $1.date }
+            return PeriodBucket(
+                id: monthKeyFormatter.string(from: monthDate),
+                label: monthLabelFormatter.string(from: monthDate),
+                cost: sorted.reduce(0) { $0 + $1.cost },
+                messageCount: sorted.reduce(0) { $0 + $1.messageCount },
+                days: sorted
+            )
+        }
+        .sorted { $0.id > $1.id }
+    }
+
+    /// Group daily usage into Monday-start week buckets, newest-first.
+    static func weeklyBuckets(from daily: [DailyUsage]) -> [PeriodBucket] {
+        var cal = Calendar.current
+        cal.firstWeekday = 2 // Monday
+        let groups = Dictionary(grouping: daily) { day -> Date in
+            cal.dateInterval(of: .weekOfYear, for: day.date)?.start ?? cal.startOfDay(for: day.date)
+        }
+        return groups.map { (weekStart, days) -> PeriodBucket in
+            let sorted = days.sorted { $0.date > $1.date }
+            let weekEnd = cal.date(byAdding: .day, value: 6, to: weekStart) ?? weekStart
+            return PeriodBucket(
+                id: dayKeyFormatter.string(from: weekStart),
+                label: "\(dayLabelFormatter.string(from: weekStart))–\(dayLabelFormatter.string(from: weekEnd))",
+                cost: sorted.reduce(0) { $0 + $1.cost },
+                messageCount: sorted.reduce(0) { $0 + $1.messageCount },
+                days: sorted
+            )
+        }
+        .sorted { $0.id > $1.id }
+    }
 
     static let isoFormatter: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
