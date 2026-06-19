@@ -637,6 +637,9 @@ struct MenuBarView: View {
 
     private var usageView: some View {
         VStack(spacing: 8) {
+            // Lifetime totals (also shown on the default Usage screen)
+            lifetimeCard
+
             ForEach(manager.quotas) { quota in
                 SHCard {
                     VStack(alignment: .leading, spacing: 8) {
@@ -1003,6 +1006,9 @@ struct MenuBarView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)
             } else {
+                // Lifetime totals (pinned at the top of Analytics)
+                lifetimeCard
+
                 // Cost cards
                 HStack(spacing: 6) {
                     SHStatCard(label: "Today", value: formatCost(manager.todayStats.totalCost), sub: "\(manager.todayStats.totalMessages) msgs")
@@ -3701,6 +3707,66 @@ struct MenuBarView: View {
         if count >= 1_000_000 { return String(format: "%.1fM", Double(count) / 1_000_000) }
         if count >= 1_000 { return String(format: "%.1fK", Double(count) / 1_000) }
         return "\(count)"
+    }
+
+    /// Large counts in billions/millions/thousands, e.g. 13.67B, 46.4K — for lifetime figures.
+    private func formatCountLong(_ count: Int) -> String {
+        if count >= 1_000_000_000 { return String(format: "%.2fB", Double(count) / 1_000_000_000) }
+        if count >= 1_000_000 { return String(format: "%.1fM", Double(count) / 1_000_000) }
+        if count >= 1_000 { return String(format: "%.1fK", Double(count) / 1_000) }
+        return "\(count)"
+    }
+
+    /// Money with thousands separators and no cents for large amounts, e.g. $17,183.
+    private func formatMoneyGrouped(_ amount: Double) -> String {
+        let nf = NumberFormatter()
+        nf.numberStyle = .decimal
+        nf.maximumFractionDigits = amount >= 100 ? 0 : 2
+        nf.minimumFractionDigits = amount >= 100 ? 0 : 2
+        return "$" + (nf.string(from: NSNumber(value: amount)) ?? String(format: "%.2f", amount))
+    }
+
+    @ViewBuilder
+    private var lifetimeCard: some View {
+        if manager.historyStats.totalMessages > 0 {
+            SHCard {
+                VStack(alignment: .leading, spacing: 6) {
+                    SHLabel("Lifetime")
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text(formatMoneyGrouped(manager.historyStats.totalCost))
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                        Text("\(formatCountLong(manager.historyStats.totalMessages)) msgs")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                    }
+                    HStack(spacing: 8) {
+                        Text("\(formatCountLong(manager.historyStats.totalTokens.totalTokens)) tokens")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.secondary)
+                        if manager.historyStats.sessionCount > 0 {
+                            Text("· \(manager.historyStats.sessionCount) sessions")
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        if let since = lifetimeSinceLabel {
+                            Text("since \(since)")
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var lifetimeSinceLabel: String? {
+        // daily is newest-first, so .last is the earliest day on record
+        guard let earliest = manager.historyStats.daily.last?.date else { return nil }
+        let f = DateFormatter()
+        f.dateFormat = Calendar.current.isDate(earliest, equalTo: Date(), toGranularity: .year) ? "MMM d" : "MMM d, yyyy"
+        return f.string(from: earliest)
     }
 
     private func colorForModel(_ model: String) -> Color {

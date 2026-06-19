@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.25.3] - 2026-06-19
+
+### Added
+- **Lifetime totals** — a pinned card at the top of both the Usage and Analytics tabs showing all-time total spend, message count, token count (in millions/billions, e.g. 13.67B), session count, and the date you started ("since …"). The history scan now covers all time instead of a 180-day window.
+
 ## [2.25.2] - 2026-06-19
 
 ### Added
