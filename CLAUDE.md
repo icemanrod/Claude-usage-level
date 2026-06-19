@@ -1,10 +1,10 @@
-# Claude God — Development Guidelines
+# Claude Usage Level — Development Guidelines
 
 ## Architecture
 
 - **Language**: Swift 5.9, SwiftUI, macOS 13+
 - **Build**: Xcodegen (`project.yml` → `xcodegen generate`)
-- **Targets**: `ClaudeGod` (main app) + `ClaudeGodWidget` (WidgetKit extension)
+- **Targets**: `ClaudeUsageLevel` (main app) + `ClaudeUsageLevelWidget` (WidgetKit extension)
 
 ## Code Style
 
@@ -35,7 +35,7 @@ for session in sessions {
 
 ### Error Handling
 
-- Never silently swallow errors. At minimum, `print("[ClaudeGod] ...")` with context.
+- Never silently swallow errors. At minimum, `print("[ClaudeUsageLevel] ...")` with context.
 - Use `Result` or typed errors for functions that can fail — not just returning `nil`.
 - Validate at boundaries (API responses, file I/O, user input), trust internal code.
 - Degrade gracefully: show cached data when network fails, show placeholders when data is missing.
@@ -87,14 +87,14 @@ for session in sessions {
 When asked to release, follow these steps in order:
 
 1. **Update `CHANGELOG.md`** — add a new `## [x.y.z] - YYYY-MM-DD` section at the top with all changes (### Added, ### Fixed, ### Changed, ### Performance as needed). Also update the changelog summary in `README.md` and the changelog section in `docs/index.html` (landing page).
-2. **Bump version** in `project.yml` — update `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` for both `ClaudeGod` and `ClaudeGodWidget` targets.
-3. **Build** to verify compilation: `xcodegen generate && xcodebuild -scheme ClaudeGod -configuration Debug build`.
+2. **Bump version** in `project.yml` — update `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` for both `ClaudeUsageLevel` and `ClaudeUsageLevelWidget` targets.
+3. **Build** to verify compilation: `xcodegen generate && xcodebuild -scheme ClaudeUsageLevel -configuration Debug build`.
 4. **Commit & push** to `main`.
 5. **Tag & push tag**: `git tag v{version} && git push origin v{version}`. GitHub Actions will build the `.dmg` automatically.
-6. **Wait for the release** to appear: `gh release view v{version} --repo Lcharvol/Claude-God`.
-7. **Download the DMG and compute SHA256**: `curl -sL https://github.com/Lcharvol/Claude-God/releases/download/v{version}/ClaudeGod.dmg -o /tmp/ClaudeGod.dmg && shasum -a 256 /tmp/ClaudeGod.dmg`.
-8. **Update the Homebrew tap** at `/tmp/homebrew-tap/Casks/claude-god.rb` — set the new `version` and `sha256`.
-9. **Commit & push the tap**: `cd /tmp/homebrew-tap && git add Casks/claude-god.rb && git commit -m "Update claude-god to v{version}" && git push origin main`.
+6. **Wait for the release** to appear: `gh release view v{version} --repo Usagelevel/Claude-Usage-Level`.
+7. **Download the DMG and compute SHA256**: `curl -sL https://github.com/Usagelevel/Claude-Usage-Level/releases/download/v{version}/ClaudeUsageLevel.dmg -o /tmp/ClaudeUsageLevel.dmg && shasum -a 256 /tmp/ClaudeUsageLevel.dmg`.
+8. **Update the Homebrew tap** at `/tmp/homebrew-tap/Casks/claude-usage-level.rb` — set the new `version` and `sha256`.
+9. **Commit & push the tap**: `cd /tmp/homebrew-tap && git add Casks/claude-usage-level.rb && git commit -m "Update claude-usage-level to v{version}" && git push origin main`.
 
 > **Important**: The SHA256 from a local build will NOT match the GitHub-served DMG (GitHub re-processes uploaded assets). Always compute the SHA from the downloaded release DMG, not from a local build.
 
@@ -111,13 +111,13 @@ Sources/
   AppShortcuts.swift      — Shortcuts.app intents
   UpdateChecker.swift     — GitHub release checker
 Widget/
-  ClaudeGodWidget.swift   — WidgetKit desktop widget
+  ClaudeUsageLevelWidget.swift   — WidgetKit desktop widget
 ```
 
 ## Build & Run
 
 ```bash
 xcodegen generate
-xcodebuild -scheme ClaudeGod -configuration Release build
-cp -R ~/Library/Developer/Xcode/DerivedData/ClaudeGod-*/Build/Products/Release/Claude\ God.app /Applications/
+xcodebuild -scheme ClaudeUsageLevel -configuration Release build
+cp -R ~/Library/Developer/Xcode/DerivedData/ClaudeUsageLevel-*/Build/Products/Release/Claude\ Usage\ Level.app /Applications/
 ```

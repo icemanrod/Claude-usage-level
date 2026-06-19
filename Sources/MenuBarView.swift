@@ -119,7 +119,7 @@ struct MenuBarView: View {
 
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 5) {
-                    Text("Claude God")
+                    Text("Claude Usage Level")
                         .font(.system(size: 13, weight: .semibold))
                     if manager.isSessionActive {
                         Circle()
@@ -230,7 +230,7 @@ struct MenuBarView: View {
             // Brew command copy
             Button {
                 NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString("brew upgrade claude-god", forType: .string)
+                NSPasteboard.general.setString("brew upgrade claude-usage-level", forType: .string)
                 copiedBrewCommand = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                     copiedBrewCommand = false
@@ -239,7 +239,7 @@ struct MenuBarView: View {
                 HStack(spacing: 6) {
                     Image(systemName: copiedBrewCommand ? "checkmark" : "doc.on.clipboard")
                         .font(.system(size: 10))
-                    Text(copiedBrewCommand ? "Copied!" : "brew upgrade claude-god")
+                    Text(copiedBrewCommand ? "Copied!" : "brew upgrade claude-usage-level")
                         .font(.system(size: 11, design: .monospaced))
                 }
                 .foregroundColor(copiedBrewCommand ? .green : .secondary)
@@ -583,12 +583,12 @@ struct MenuBarView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     SHLabel("About")
                     HStack(spacing: 8) {
-                        Text("Claude God v\(UpdateChecker.currentVersion)")
+                        Text("Claude Usage Level v\(UpdateChecker.currentVersion)")
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                         Spacer()
                         SHButton(label: "GitHub", icon: "link", style: .outline) {
-                            if let url = URL(string: "https://github.com/Lcharvol/Claude-God") {
+                            if let url = URL(string: "https://github.com/Usagelevel/Claude-Usage-Level") {
                                 NSWorkspace.shared.open(url)
                             }
                         }
@@ -599,7 +599,7 @@ struct MenuBarView: View {
                             .foregroundColor(.secondary)
                         Spacer()
                         SHButton(label: "Report issue", icon: "exclamationmark.bubble", style: .ghost) {
-                            if let url = URL(string: "https://github.com/Lcharvol/Claude-God/issues") {
+                            if let url = URL(string: "https://github.com/Usagelevel/Claude-Usage-Level/issues") {
                                 NSWorkspace.shared.open(url)
                             }
                         }

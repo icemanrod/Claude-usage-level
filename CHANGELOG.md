@@ -2,15 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.24.0] - 2026-06-19
+
+### Changed
+- **Rebranded to Claude Usage Level** — full rename across the app, widget, bundle identifiers (`com.usagelevel.claude-usage-level`), build configuration, website, and documentation. The macOS Keychain service used to read credentials (`Claude Code-credentials`) is intentionally unchanged.
+
 ## [2.23.4] - 2026-06-15
 
 ### Fixed
-- **Repeated "Claude God wants to use your confidential information stored in 'Claude Code-credentials-XXXXXXXX'" prompt** — newer Claude Code versions write credentials under a suffixed service name (e.g. `Claude Code-credentials-88d13be2`), and the per-entry data fetch in `loadBestKeychainEntryWithPrefix` was using `SecItemCopyMatching + kSecReturnData`. That call goes through the Security framework, which triggers the macOS keychain access dialog on every read — producing a dialog loop where "Allow" only suppresses one cycle. The fetch now reuses the existing `readKeychainViaSecurityCLI(service:account:)` helper (`/usr/bin/security find-generic-password` with the exact service name discovered from the non-prompting list query), which bypasses the Security-framework dialog entirely ([#30](https://github.com/Lcharvol/Claude-God/issues/30), [#31](https://github.com/Lcharvol/Claude-God/pull/31), thanks @nairdaleo)
+- **Repeated "Claude Usage Level wants to use your confidential information stored in 'Claude Code-credentials-XXXXXXXX'" prompt** — newer Claude Code versions write credentials under a suffixed service name (e.g. `Claude Code-credentials-88d13be2`), and the per-entry data fetch in `loadBestKeychainEntryWithPrefix` was using `SecItemCopyMatching + kSecReturnData`. That call goes through the Security framework, which triggers the macOS keychain access dialog on every read — producing a dialog loop where "Allow" only suppresses one cycle. The fetch now reuses the existing `readKeychainViaSecurityCLI(service:account:)` helper (`/usr/bin/security find-generic-password` with the exact service name discovered from the non-prompting list query), which bypasses the Security-framework dialog entirely ([#30](https://github.com/Usagelevel/Claude-Usage-Level/issues/30), [#31](https://github.com/Usagelevel/Claude-Usage-Level/pull/31), thanks @nairdaleo)
 
 ## [2.23.3] - 2026-06-08
 
 ### Fixed
-- **No more "Claude God wants to access the keychain" prompt for the common case** — v2.23.2's Keychain scan used the Security framework directly, which triggers macOS's keychain access dialog the first time an ad-hoc-signed app reads an item it didn't create. `loadFromKeychain` now tries `/usr/bin/security find-generic-password -s "Claude Code-credentials" -a $USER` as a second fast path before calling `SecItemCopyMatching` — the shelled-out binary has its own trusted keychain access, so single-user installs (the vast majority) resolve cleanly without any prompt. The Security-framework scan only runs as a last resort for unusual multi-account / suffixed-entry layouts
+- **No more "Claude Usage Level wants to access the keychain" prompt for the common case** — v2.23.2's Keychain scan used the Security framework directly, which triggers macOS's keychain access dialog the first time an ad-hoc-signed app reads an item it didn't create. `loadFromKeychain` now tries `/usr/bin/security find-generic-password -s "Claude Code-credentials" -a $USER` as a second fast path before calling `SecItemCopyMatching` — the shelled-out binary has its own trusted keychain access, so single-user installs (the vast majority) resolve cleanly without any prompt. The Security-framework scan only runs as a last resort for unusual multi-account / suffixed-entry layouts
 
 ## [2.23.2] - 2026-06-08
 
@@ -20,19 +25,19 @@ All notable changes to this project will be documented in this file.
 ## [2.23.1] - 2026-06-08
 
 ### Fixed
-- **Embedded `claude auth login` no longer crashes the app** — the PTY slave file descriptor was being closed twice (once explicitly after fork, then again when the `FileHandle` was deallocated with `closeOnDealloc: true`). After the first `close()` recycled the FD number, the OS reused it for a guarded keychain/socket FD, so the handle's dealloc triggered `EXC_GUARD` on whatever now owned that slot. Switching the slave handle to `closeOnDealloc: false` removes the double-close ([#26](https://github.com/Lcharvol/Claude-God/issues/26), [#27](https://github.com/Lcharvol/Claude-God/pull/27), thanks @nairdaleo)
+- **Embedded `claude auth login` no longer crashes the app** — the PTY slave file descriptor was being closed twice (once explicitly after fork, then again when the `FileHandle` was deallocated with `closeOnDealloc: true`). After the first `close()` recycled the FD number, the OS reused it for a guarded keychain/socket FD, so the handle's dealloc triggered `EXC_GUARD` on whatever now owned that slot. Switching the slave handle to `closeOnDealloc: false` removes the double-close ([#26](https://github.com/Usagelevel/Claude-Usage-Level/issues/26), [#27](https://github.com/Usagelevel/Claude-Usage-Level/pull/27), thanks @nairdaleo)
 - **Credentials detected when only per-project keychain entries exist** — newer Claude Code versions write credentials to suffixed Keychain entries like `"Claude Code-credentials/path/to/project"` and may leave the base `"Claude Code-credentials"` entry stale or absent. `AuthManager.loadFromKeychain()` now falls back to a Security-framework scan that picks the best valid entry across all `"Claude Code-credentials*"` items when the base entry is missing or expired, so users who appeared "Not connected" right after signing in are picked up correctly
 - **Popover only grows downward when resizing** — in Release/Homebrew builds SwiftUI was resizing the `MenuBarExtra` window from its center, causing the popover to expand from both top and bottom and detach visually from the status bar item. A new `WindowTopAnchor` pins `maxY` (the top edge) so the window stays anchored to the menu bar while the bottom edge follows the drag
 
 ## [2.23.0] - 2026-06-01
 
 ### Added
-- **Extra Usage surfaced as a first-class quota across the app** — enterprise/work accounts with a dollar-only budget (no token quotas) previously saw "—" in every menu bar percentage mode. Extra Usage spend/limit is now rendered as a % everywhere token quotas are: the menu bar icon color reacts to high spend (warning/critical), the "All" mode appends `E X%` alongside token percentages, Extra Usage is a selectable ring in Icon+ Rings mode, and standard "Alert when usage is high" plus custom alert rules now fire for it too. The popover's Extra Usage card also gains a color-coded progress bar and percentage when a monthly limit is set; unlimited plans keep the On/Off badge ([#25](https://github.com/Lcharvol/Claude-God/pull/25), thanks @ecoffey)
+- **Extra Usage surfaced as a first-class quota across the app** — enterprise/work accounts with a dollar-only budget (no token quotas) previously saw "—" in every menu bar percentage mode. Extra Usage spend/limit is now rendered as a % everywhere token quotas are: the menu bar icon color reacts to high spend (warning/critical), the "All" mode appends `E X%` alongside token percentages, Extra Usage is a selectable ring in Icon+ Rings mode, and standard "Alert when usage is high" plus custom alert rules now fire for it too. The popover's Extra Usage card also gains a color-coded progress bar and percentage when a monthly limit is set; unlimited plans keep the On/Off badge ([#25](https://github.com/Usagelevel/Claude-Usage-Level/pull/25), thanks @ecoffey)
 
 ## [2.22.2] - 2026-05-26
 
 ### Changed
-- **Peak hours window updated to Anthropic's new 5am–11am PT band** — reflects the policy change announced 2026-03-26 where 5-hour session limits burn faster during weekdays 5am–11am Pacific (1pm–7pm GMT) due to overlapping US-morning, European-afternoon, and Asia-evening demand. The previous 7am–5pm PT window was Claude God's original guess at "US business hours" and no longer matched Anthropic's actual throttling band ([#24](https://github.com/Lcharvol/Claude-God/pull/24), thanks @pieropalevsky)
+- **Peak hours window updated to Anthropic's new 5am–11am PT band** — reflects the policy change announced 2026-03-26 where 5-hour session limits burn faster during weekdays 5am–11am Pacific (1pm–7pm GMT) due to overlapping US-morning, European-afternoon, and Asia-evening demand. The previous 7am–5pm PT window was Claude Usage Level's original guess at "US business hours" and no longer matched Anthropic's actual throttling band ([#24](https://github.com/Usagelevel/Claude-Usage-Level/pull/24), thanks @pieropalevsky)
 
 ### Refactored
 - **Peak-hours tooltip drift eliminated** — `MenuBarView` tooltips now derive from a single `UsageManager.peakHoursDescription` computed from `peakStartHour` / `peakEndHour` constants, so future window changes touch one place instead of three. Doc-comment also rewritten to explain *why* the window is what it is (Anthropic global throttling, not US business hours)
@@ -40,26 +45,26 @@ All notable changes to this project will be documented in this file.
 ## [2.22.1] - 2026-05-26
 
 ### Fixed
-- **OAuth token self-refresh returning HTTP 400** — `selfRefreshToken` now sends `application/x-www-form-urlencoded` with proper percent-encoding (RFC 6749 §6) instead of `application/json`, so the platform token endpoint accepts the refresh grant ([#21](https://github.com/Lcharvol/Claude-God/issues/21), [#22](https://github.com/Lcharvol/Claude-God/pull/22))
+- **OAuth token self-refresh returning HTTP 400** — `selfRefreshToken` now sends `application/x-www-form-urlencoded` with proper percent-encoding (RFC 6749 §6) instead of `application/json`, so the platform token endpoint accepts the refresh grant ([#21](https://github.com/Usagelevel/Claude-Usage-Level/issues/21), [#22](https://github.com/Usagelevel/Claude-Usage-Level/pull/22))
 - **`claude` binary not found with nvm/fnm/volta/pnpm installs** — `launchAutoReconnect()` now falls back to `$SHELL -l -c "which claude"` when none of the hardcoded paths match, and adds the fnm default-alias path as an extra candidate. Error message also points users to `npm i -g @anthropic-ai/claude-code` when the CLI is genuinely missing
 - **No recovery after manual `claude auth login`** — added a 10s background poller (`startExpiredCredentialPolling`) that reloads credentials from file *and* Keychain when the token is expired but no embedded reconnect flow is running. macOS Keychain-only credential writes are now picked up automatically without the user clicking Sign In
 
 ## [2.22.0] - 2026-05-04
 
 ### Added
-- **Rings menu bar mode** — Apple Watch-style concentric activity rings showing up to 3 quotas at a glance, with a small "C" in the center. Configurable in Settings (pick which quotas to display) with a live legend preview. A virtual "Timer" ring option fills as the 5h session window progresses toward reset. Uses `NSImage` + `NSBezierPath` for full-color rendering in the menu bar (SwiftUI Canvas/Circle render as templates in `MenuBarExtra` labels), with appearance-aware background tinting for legibility on light menu bars ([#20](https://github.com/Lcharvol/Claude-God/pull/20))
+- **Rings menu bar mode** — Apple Watch-style concentric activity rings showing up to 3 quotas at a glance, with a small "C" in the center. Configurable in Settings (pick which quotas to display) with a live legend preview. A virtual "Timer" ring option fills as the 5h session window progresses toward reset. Uses `NSImage` + `NSBezierPath` for full-color rendering in the menu bar (SwiftUI Canvas/Circle render as templates in `MenuBarExtra` labels), with appearance-aware background tinting for legibility on light menu bars ([#20](https://github.com/Usagelevel/Claude-Usage-Level/pull/20))
 
 ## [2.21.1] - 2026-05-04
 
 ### Fixed
-- **Energy consumption** — drastically reduced background CPU activity ([#14](https://github.com/Lcharvol/Claude-God/issues/14)): removed `disableAppNap()` (was blocking macOS's main background-app energy optimization), countdown timer is now adaptive (60s when remaining > 1h, 1s only in the final hour where seconds are visible), active-session check slowed from 15s to 60s, and the 30-day JSONL stats scan is deferred to popover-open instead of running on every auto-refresh tick
-- **Widget never registered** — added the missing `NSExtensionPointIdentifier` in `ClaudeGodWidget.appex/Info.plist` so macOS now recognizes the bundle as a WidgetKit extension and lists it in the widget gallery ([#13](https://github.com/Lcharvol/Claude-God/issues/13))
+- **Energy consumption** — drastically reduced background CPU activity ([#14](https://github.com/Usagelevel/Claude-Usage-Level/issues/14)): removed `disableAppNap()` (was blocking macOS's main background-app energy optimization), countdown timer is now adaptive (60s when remaining > 1h, 1s only in the final hour where seconds are visible), active-session check slowed from 15s to 60s, and the 30-day JSONL stats scan is deferred to popover-open instead of running on every auto-refresh tick
+- **Widget never registered** — added the missing `NSExtensionPointIdentifier` in `ClaudeUsageLevelWidget.appex/Info.plist` so macOS now recognizes the bundle as a WidgetKit extension and lists it in the widget gallery ([#13](https://github.com/Usagelevel/Claude-Usage-Level/issues/13))
 - **Resizable popover actually works** — replaced the broken `WindowResizer` (its `view.window` guard exited silently before SwiftUI attached the host view, so `.resizable` was never inserted) with a SwiftUI `ResizeHandle`: visible grip just above the bottom toolbar, vertical-resize cursor on hover, drag to grow / shrink the popover
 
 ## [2.21.0] - 2026-05-04
 
 ### Added
-- **Session+Week menu bar mode** — new display option shows session %, time-to-reset, and weekly % at a glance (`15% · 2h31m | W 31%`) ([#15](https://github.com/Lcharvol/Claude-God/issues/15))
+- **Session+Week menu bar mode** — new display option shows session %, time-to-reset, and weekly % at a glance (`15% · 2h31m | W 31%`) ([#15](https://github.com/Usagelevel/Claude-Usage-Level/issues/15))
 - **Resizable window** — drag the bottom edge to set the panel height; persists across launches via `UserDefaults`
 - **Extra usage balance card** — new card in the usage view shows extra credits used and monthly limit (API returns cents, displayed as dollars)
 - **Claude Design quota row** — `seven_day_omelette` API field now parsed and rendered alongside Sonnet / Opus / Haiku
@@ -69,7 +74,7 @@ All notable changes to this project will be documented in this file.
 - **Debug: copy raw API response** — button in the About section copies the last raw OAuth usage JSON to the clipboard
 
 ### Fixed
-- Usage tab no longer flickers when OAuth token is expired ([#7](https://github.com/Lcharvol/Claude-God/pull/7))
+- Usage tab no longer flickers when OAuth token is expired ([#7](https://github.com/Usagelevel/Claude-Usage-Level/pull/7))
 - Long reset times now displayed as days/hours instead of raw hours
 - Window can shrink below content height for proper scrolling
 - Keychain is polled every 5s after `claude auth login` instead of relying solely on the file watcher
@@ -151,7 +156,7 @@ All notable changes to this project will be documented in this file.
 - Keychain: read credentials off main thread to prevent UI freezes on startup
 
 ### Added
-- "brew upgrade claude-god" copy button in update banner
+- "brew upgrade claude-usage-level" copy button in update banner
 
 ## [2.18.1] - 2026-03-18
 
@@ -321,7 +326,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Global keyboard shortcut `⌥⌘C` to toggle the popover from anywhere (Carbon hotkey API)
-- Homebrew cask distribution: `brew tap lcharvol/tap && brew install --cask claude-god`
+- Homebrew cask distribution: `brew tap usagelevel/tap && brew install --cask claude-usage-level`
 
 ## [2.6.0] - 2026-03-11
 
@@ -461,4 +466,4 @@ All notable changes to this project will be documented in this file.
 - API key input with SecureField
 - Xcodegen-based project generation
 - GitHub Actions CI/CD pipeline (build + DMG on tag push)
-- Landing page for claudegod.app
+- Landing page for claudeusagelevel.app

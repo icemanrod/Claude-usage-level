@@ -40,7 +40,7 @@ class HotkeyManager {
 
         // ⌥⌘C — key code 8 = 'C'
         var hotkeyID = EventHotKeyID(
-            signature: OSType(0x434C4744), // "CLGD"
+            signature: OSType(0x43554C56), // "CULV" (Claude Usage Level)
             id: 1
         )
 

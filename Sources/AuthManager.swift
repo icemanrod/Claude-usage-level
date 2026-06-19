@@ -311,7 +311,7 @@ class AuthManager: ObservableObject {
     ///
     /// Tries cheap, non-prompting `/usr/bin/security` shell-outs first (no keychain
     /// access dialog), and only falls back to the direct Security framework API —
-    /// which can trigger a one-time "Claude God wants to access the keychain"
+    /// which can trigger a one-time "Claude Usage Level wants to access the keychain"
     /// prompt — when those fail. Most users have an entry whose account matches
     /// `$USER`, so the per-account fast path resolves cleanly without any prompt.
     ///

@@ -1,4 +1,4 @@
-// ClaudeGodWidget.swift
+// ClaudeUsageLevelWidget.swift
 // macOS Desktop Widget — shows Claude quota gauges
 
 import WidgetKit
@@ -36,7 +36,7 @@ struct QuotaInfo: Identifiable {
     let color: Color
 }
 
-struct ClaudeGodProvider: TimelineProvider {
+struct ClaudeUsageLevelProvider: TimelineProvider {
     func placeholder(in context: Context) -> QuotaEntry {
         .placeholder
     }
@@ -54,7 +54,7 @@ struct ClaudeGodProvider: TimelineProvider {
 
     private func makeEntry() -> QuotaEntry {
         // Read cached quota data from shared UserDefaults (app group)
-        let defaults = UserDefaults(suiteName: "group.com.lcharvol.claude-god") ?? .standard
+        let defaults = UserDefaults(suiteName: "group.com.usagelevel.claude-usage-level") ?? .standard
         let quotas: [QuotaInfo]
         let todayCost: Double
         let todayMessages: Int
@@ -131,7 +131,7 @@ struct QuotaGaugeView: View {
     }
 }
 
-struct ClaudeGodWidgetView: View {
+struct ClaudeUsageLevelWidgetView: View {
     let entry: QuotaEntry
 
     private var staleness: String? {
@@ -157,7 +157,7 @@ struct ClaudeGodWidgetView: View {
                             RoundedRectangle(cornerRadius: 5, style: .continuous)
                                 .fill(Color(red: 0.56, green: 0.39, blue: 0.98))
                         )
-                    Text("Claude God")
+                    Text("Claude Usage Level")
                         .font(.system(size: 11, weight: .semibold))
                     Spacer()
                 }
@@ -182,7 +182,7 @@ struct ClaudeGodWidgetView: View {
                             RoundedRectangle(cornerRadius: 5, style: .continuous)
                                 .fill(Color(red: 0.56, green: 0.39, blue: 0.98))
                         )
-                    Text("Claude God")
+                    Text("Claude Usage Level")
                         .font(.system(size: 11, weight: .semibold))
                     Spacer()
                     if let stale = staleness {
@@ -217,12 +217,12 @@ struct ClaudeGodWidgetView: View {
 // MARK: - Widget
 
 @main
-struct ClaudeGodWidget: Widget {
-    let kind = "ClaudeGodWidget"
+struct ClaudeUsageLevelWidget: Widget {
+    let kind = "ClaudeUsageLevelWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: ClaudeGodProvider()) { entry in
-            ClaudeGodWidgetView(entry: entry)
+        StaticConfiguration(kind: kind, provider: ClaudeUsageLevelProvider()) { entry in
+            ClaudeUsageLevelWidgetView(entry: entry)
         }
         .configurationDisplayName("Claude Quotas")
         .description("Monitor your Claude AI quota usage")

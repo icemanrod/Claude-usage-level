@@ -4,7 +4,7 @@
 import SwiftUI
 
 @main
-struct ClaudeGodApp: App {
+struct ClaudeUsageLevelApp: App {
     @StateObject private var manager: UsageManager
 
     init() {

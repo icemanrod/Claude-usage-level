@@ -7,8 +7,8 @@ generate:
 # Build the app in Release mode
 build: generate
 	xcodebuild \
-		-project ClaudeGod.xcodeproj \
-		-scheme ClaudeGod \
+		-project ClaudeUsageLevel.xcodeproj \
+		-scheme ClaudeUsageLevel \
 		-configuration Release \
 		-derivedDataPath build \
 		CODE_SIGN_IDENTITY="-" \
@@ -17,25 +17,25 @@ build: generate
 
 # Open in Xcode
 open: generate
-	open ClaudeGod.xcodeproj
+	open ClaudeUsageLevel.xcodeproj
 
 # Build and run
 run: build
-	open "build/Build/Products/Release/Claude God.app"
+	open "build/Build/Products/Release/Claude Usage Level.app"
 
 # Create a DMG
 dmg: build
 	mkdir -p dmg-contents
-	cp -R "build/Build/Products/Release/Claude God.app" dmg-contents/
+	cp -R "build/Build/Products/Release/Claude Usage Level.app" dmg-contents/
 	ln -sf /Applications dmg-contents/Applications
 	hdiutil create \
-		-volname "Claude God" \
+		-volname "Claude Usage Level" \
 		-srcfolder dmg-contents \
 		-ov \
 		-format UDZO \
-		ClaudeGod.dmg
+		ClaudeUsageLevel.dmg
 	rm -rf dmg-contents
 
 # Clean build artifacts
 clean:
-	rm -rf build ClaudeGod.xcodeproj ClaudeGod.dmg dmg-contents
+	rm -rf build ClaudeUsageLevel.xcodeproj ClaudeUsageLevel.dmg dmg-contents

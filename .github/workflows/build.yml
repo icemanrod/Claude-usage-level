@@ -28,8 +28,8 @@ jobs:
           VERSION=${GITHUB_REF_NAME#v}
           echo "Building version: $VERSION"
           xcodebuild \
-            -project ClaudeGod.xcodeproj \
-            -scheme ClaudeGod \
+            -project ClaudeUsageLevel.xcodeproj \
+            -scheme ClaudeUsageLevel \
             -configuration Release \
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="-" \
@@ -40,8 +40,8 @@ jobs:
 
       - name: Create DMG
         run: |
-          APP_PATH="build/Build/Products/Release/Claude God.app"
-          DMG_NAME="ClaudeGod.dmg"
+          APP_PATH="build/Build/Products/Release/Claude Usage Level.app"
+          DMG_NAME="ClaudeUsageLevel.dmg"
 
           # Create a temporary directory for the DMG contents
           mkdir -p dmg-contents
@@ -50,7 +50,7 @@ jobs:
 
           # Create DMG
           hdiutil create \
-            -volname "Claude God" \
+            -volname "Claude Usage Level" \
             -srcfolder dmg-contents \
             -ov \
             -format UDZO \
@@ -62,14 +62,14 @@ jobs:
           VERSION=${GITHUB_REF_NAME#v}
           BODY=$(awk "/^## \[${VERSION}\]/{found=1; next} /^## \[/{if(found) exit} found{print}" CHANGELOG.md)
           if [ -z "$BODY" ]; then
-            BODY="See [CHANGELOG.md](https://github.com/Lcharvol/Claude-God/blob/main/CHANGELOG.md) for details."
+            BODY="See [CHANGELOG.md](https://github.com/Usagelevel/Claude-Usage-Level/blob/main/CHANGELOG.md) for details."
           fi
           echo "$BODY" > /tmp/release-body.md
-          printf '\n---\n\n## Install\n\n**Homebrew (recommended)**\n```bash\nbrew tap lcharvol/tap\nbrew install --cask claude-god\n```\n\n**Manual** — download `ClaudeGod.dmg` below, drag to Applications, then run:\n```bash\nxattr -cr /Applications/Claude\\ God.app\n```\n' >> /tmp/release-body.md
+          printf '\n---\n\n## Install\n\n**Homebrew (recommended)**\n```bash\nbrew tap usagelevel/tap\nbrew install --cask claude-usage-level\n```\n\n**Manual** — download `ClaudeUsageLevel.dmg` below, drag to Applications, then run:\n```bash\nxattr -cr /Applications/Claude\\ Usage\\ Level.app\n```\n' >> /tmp/release-body.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ClaudeGod.dmg
+          files: ClaudeUsageLevel.dmg
           body_path: /tmp/release-body.md
           draft: false

@@ -15,7 +15,7 @@ class UpdateChecker: ObservableObject {
     ) as? String ?? "1.0.0"
 
     func check() {
-        guard let url = URL(string: "https://api.github.com/repos/Lcharvol/Claude-God/releases/latest") else { return }
+        guard let url = URL(string: "https://api.github.com/repos/Usagelevel/Claude-Usage-Level/releases/latest") else { return }
 
         var request = URLRequest(url: url)
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")

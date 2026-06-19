@@ -1,13 +1,13 @@
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/Lcharvol/Claude-God?style=flat-square&color=8b6cf6&label=latest" alt="Release">
+  <img src="https://img.shields.io/github/v/release/Usagelevel/Claude-Usage-Level?style=flat-square&color=8b6cf6&label=latest" alt="Release">
   <img src="https://img.shields.io/badge/macOS-13%2B-black?style=flat-square" alt="macOS 13+">
   <img src="https://img.shields.io/badge/Swift-5.9-F05138?style=flat-square" alt="Swift 5.9">
-  <img src="https://img.shields.io/github/license/Lcharvol/Claude-God?style=flat-square&color=34d399" alt="MIT License">
-  <a href="https://github.com/Lcharvol/Claude-God/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Lcharvol/Claude-God/ci.yml?style=flat-square&label=CI" alt="CI"></a>
+  <img src="https://img.shields.io/github/license/Usagelevel/Claude-Usage-Level?style=flat-square&color=34d399" alt="MIT License">
+  <a href="https://github.com/Usagelevel/Claude-Usage-Level/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Usagelevel/Claude-Usage-Level/ci.yml?style=flat-square&label=CI" alt="CI"></a>
 </p>
 
 <h1 align="center">
-  Claude God
+  Claude Usage Level
 </h1>
 
 <p align="center">
@@ -33,9 +33,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Lcharvol/Claude-God/releases/latest/download/ClaudeGod.dmg"><strong>Download .dmg</strong></a> &nbsp;&middot;&nbsp;
-  <a href="https://claudegod.app">Website</a> &nbsp;&middot;&nbsp;
-  <a href="https://github.com/Lcharvol/Claude-God/releases">Changelog</a>
+  <a href="https://github.com/Usagelevel/Claude-Usage-Level/releases/latest/download/ClaudeUsageLevel.dmg"><strong>Download .dmg</strong></a> &nbsp;&middot;&nbsp;
+  <a href="https://claudeusagelevel.app">Website</a> &nbsp;&middot;&nbsp;
+  <a href="https://github.com/Usagelevel/Claude-Usage-Level/releases">Changelog</a>
 </p>
 
 ---
@@ -83,18 +83,18 @@
 ### Homebrew (recommended)
 
 ```bash
-brew tap lcharvol/tap
-brew install --cask claude-god
+brew tap usagelevel/tap
+brew install --cask claude-usage-level
 ```
 
 ### Manual
 
 ```bash
 # 1. Download & install
-open https://github.com/Lcharvol/Claude-God/releases/latest/download/ClaudeGod.dmg
+open https://github.com/Usagelevel/Claude-Usage-Level/releases/latest/download/ClaudeUsageLevel.dmg
 
 # 2. Allow unsigned app (required once)
-xattr -cr /Applications/Claude\ God.app
+xattr -cr /Applications/Claude\ Usage\ Level.app
 ```
 
 ### Then
@@ -104,7 +104,7 @@ xattr -cr /Applications/Claude\ God.app
 claude login
 
 # Launch — a "C" icon appears in the menu bar, press ⌥⌘C to toggle
-open /Applications/Claude\ God.app
+open /Applications/Claude\ Usage\ Level.app
 ```
 
 ---
@@ -128,8 +128,8 @@ Returns utilization for each quota window (`five_hour`, `seven_day`, `seven_day_
 ## Build from Source
 
 ```bash
-git clone https://github.com/Lcharvol/Claude-God.git
-cd Claude-God
+git clone https://github.com/Usagelevel/Claude-Usage-Level.git
+cd Claude-Usage-Level
 brew install xcodegen    # one time
 make build               # or: make open (Xcode)
 ```
@@ -150,7 +150,7 @@ Sources/
 ├── SessionAnalyzer.swift    # JSONL parser, cost calculator, efficiency metrics
 └── Assets.xcassets/         # App icon
 Widget/
-└── ClaudeGodWidget.swift    # WidgetKit — desktop quota gauges
+└── ClaudeUsageLevelWidget.swift    # WidgetKit — desktop quota gauges
 ```
 
 **Zero external dependencies.** Foundation + SwiftUI + Combine + Security + UserNotifications + ServiceManagement.
@@ -165,41 +165,41 @@ git tag v2.8.0 && git push origin v2.8.0
 ## Changelog
 
 ### v2.23.4
-- **Fixed**: Repeated "Claude God wants to use your confidential information stored in `Claude Code-credentials-XXXXXXXX`" prompt — newer Claude Code versions write credentials under suffixed service names, and the per-entry data fetch in `loadBestKeychainEntryWithPrefix` used `SecItemCopyMatching + kSecReturnData`, which prompts on every read. The fetch now reuses the existing `security find-generic-password` helper with the exact service name discovered from the non-prompting list query, so the dialog loop disappears ([#30](https://github.com/Lcharvol/Claude-God/issues/30), [#31](https://github.com/Lcharvol/Claude-God/pull/31), thanks @nairdaleo)
+- **Fixed**: Repeated "Claude Usage Level wants to use your confidential information stored in `Claude Code-credentials-XXXXXXXX`" prompt — newer Claude Code versions write credentials under suffixed service names, and the per-entry data fetch in `loadBestKeychainEntryWithPrefix` used `SecItemCopyMatching + kSecReturnData`, which prompts on every read. The fetch now reuses the existing `security find-generic-password` helper with the exact service name discovered from the non-prompting list query, so the dialog loop disappears ([#30](https://github.com/Usagelevel/Claude-Usage-Level/issues/30), [#31](https://github.com/Usagelevel/Claude-Usage-Level/pull/31), thanks @nairdaleo)
 
 ### v2.23.3
-- **Fixed**: No more "Claude God wants to access the keychain" prompt for the common case — v2.23.2's fallback hit the Security framework API directly (which prompts the first time an ad-hoc-signed app reads an item it didn't create). Now tries `security find-generic-password -a $USER` as a second non-prompting fast path before the API; the scan only runs for unusual multi-account layouts
+- **Fixed**: No more "Claude Usage Level wants to access the keychain" prompt for the common case — v2.23.2's fallback hit the Security framework API directly (which prompts the first time an ad-hoc-signed app reads an item it didn't create). Now tries `security find-generic-password -a $USER` as a second non-prompting fast path before the API; the scan only runs for unusual multi-account layouts
 
 ### v2.23.2
 - **Fixed**: PR #27 Keychain fallback actually works now — the scan called `SecItemCopyMatching` with an attribute combination (`kSecReturnAttributes + kSecReturnData + kSecMatchLimitAll`) that returns `errSecParam (-50)` on the legacy login keychain, so it bailed out before reading anything. Now lists refs+attributes first, then fetches each item's data with a per-item query, so users with multiple `Claude Code-credentials` entries (Claude Code stores `account=unknown` next to `account=<user>`) finally connect
 
 ### v2.23.1
-- **Fixed**: Embedded `claude auth login` no longer crashes the app — PTY slave FD was being closed twice (after the first close, the OS reused that FD slot for a guarded keychain socket, then the handle's dealloc triggered `EXC_GUARD`); slave handle now uses `closeOnDealloc: false` ([#26](https://github.com/Lcharvol/Claude-God/issues/26), [#27](https://github.com/Lcharvol/Claude-God/pull/27), thanks @nairdaleo)
+- **Fixed**: Embedded `claude auth login` no longer crashes the app — PTY slave FD was being closed twice (after the first close, the OS reused that FD slot for a guarded keychain socket, then the handle's dealloc triggered `EXC_GUARD`); slave handle now uses `closeOnDealloc: false` ([#26](https://github.com/Usagelevel/Claude-Usage-Level/issues/26), [#27](https://github.com/Usagelevel/Claude-Usage-Level/pull/27), thanks @nairdaleo)
 - **Fixed**: Credentials detected when only per-project Keychain entries exist — newer Claude Code writes suffixed entries (`Claude Code-credentials/path/...`) and may leave the base entry stale, so signed-in users appeared "Not connected"; `AuthManager` now scans all `Claude Code-credentials*` items as a fallback
 - **Fixed**: Popover only grows downward when resizing — new `WindowTopAnchor` pins the top edge to the status bar item in Release/Homebrew builds (was resizing from the center)
 
 ### v2.23.0
-- **New**: Extra Usage (dollar budget) is now a first-class quota across the app — surfaced as a % in every menu bar mode (including `E X%` in "All" mode), selectable as a ring in Icon+ Rings, drives icon warning/critical colors, and fires standard + custom usage alerts. The popover's Extra Usage card gains a color-coded progress bar when a monthly limit is set ([#25](https://github.com/Lcharvol/Claude-God/pull/25), thanks @ecoffey)
+- **New**: Extra Usage (dollar budget) is now a first-class quota across the app — surfaced as a % in every menu bar mode (including `E X%` in "All" mode), selectable as a ring in Icon+ Rings, drives icon warning/critical colors, and fires standard + custom usage alerts. The popover's Extra Usage card gains a color-coded progress bar when a monthly limit is set ([#25](https://github.com/Usagelevel/Claude-Usage-Level/pull/25), thanks @ecoffey)
 
 ### v2.22.2
-- **Changed**: Peak hours window updated to Mon–Fri 5am–11am PT to match Anthropic's actual throttling band for 5-hour session limits (was 7am–5pm PT) ([#24](https://github.com/Lcharvol/Claude-God/pull/24), thanks @pieropalevsky)
+- **Changed**: Peak hours window updated to Mon–Fri 5am–11am PT to match Anthropic's actual throttling band for 5-hour session limits (was 7am–5pm PT) ([#24](https://github.com/Usagelevel/Claude-Usage-Level/pull/24), thanks @pieropalevsky)
 - **Refactored**: Tooltips derive from a single `peakHoursDescription` source-of-truth so future policy changes touch one constant instead of three sites
 
 ### v2.22.1
-- **Fixed**: OAuth token self-refresh — now sends `application/x-www-form-urlencoded` per RFC 6749, ending the HTTP 400 loop on silent refresh ([#21](https://github.com/Lcharvol/Claude-God/issues/21), [#22](https://github.com/Lcharvol/Claude-God/pull/22))
+- **Fixed**: OAuth token self-refresh — now sends `application/x-www-form-urlencoded` per RFC 6749, ending the HTTP 400 loop on silent refresh ([#21](https://github.com/Usagelevel/Claude-Usage-Level/issues/21), [#22](https://github.com/Usagelevel/Claude-Usage-Level/pull/22))
 - **Fixed**: `claude` binary resolution — falls back to `$SHELL -l -c "which claude"` so nvm / fnm / volta / pnpm installs are found
 - **Fixed**: Auto-recovery after manual `claude auth login` — 10s background poller picks up Keychain-only credential writes without needing Sign In
 
 ### v2.22.0
-- **New**: Rings menu bar mode — Apple Watch-style concentric activity rings for up to 3 quotas, configurable picker + live preview, optional Timer ring ([#20](https://github.com/Lcharvol/Claude-God/pull/20))
+- **New**: Rings menu bar mode — Apple Watch-style concentric activity rings for up to 3 quotas, configurable picker + live preview, optional Timer ring ([#20](https://github.com/Usagelevel/Claude-Usage-Level/pull/20))
 
 ### v2.21.1
-- **Fixed**: Drastic energy savings — App Nap re-enabled, adaptive countdown, slower active-session polling, JSONL scan deferred to popover open ([#14](https://github.com/Lcharvol/Claude-God/issues/14))
-- **Fixed**: Widget extension now registers — added missing `NSExtensionPointIdentifier` ([#13](https://github.com/Lcharvol/Claude-God/issues/13))
+- **Fixed**: Drastic energy savings — App Nap re-enabled, adaptive countdown, slower active-session polling, JSONL scan deferred to popover open ([#14](https://github.com/Usagelevel/Claude-Usage-Level/issues/14))
+- **Fixed**: Widget extension now registers — added missing `NSExtensionPointIdentifier` ([#13](https://github.com/Usagelevel/Claude-Usage-Level/issues/13))
 - **Fixed**: Resizable popover actually responds to drag — visible grip handle replaces the broken NSWindow wiring
 
 ### v2.21.0
-- **New**: Session+Week menu bar mode — session %, reset countdown, and weekly % at a glance ([#15](https://github.com/Lcharvol/Claude-God/issues/15))
+- **New**: Session+Week menu bar mode — session %, reset countdown, and weekly % at a glance ([#15](https://github.com/Usagelevel/Claude-Usage-Level/issues/15))
 - **New**: Resizable window with persisted height
 - **New**: Extra usage balance card + Claude Design quota row
 - **New**: Sign In button + opt-in auto-reconnect when OAuth token expires
@@ -212,7 +212,7 @@ git tag v2.8.0 && git push origin v2.8.0
 - **Fixed**: Respect `Retry-After` header on 429, progressive backoff, token expiry pre-flight, Keychain fallback for credentials
 
 ### v2.20.2
-- **Fixed**: App no longer gets stuck on "Rate limited" screen after `claude login` ([#5](https://github.com/Lcharvol/Claude-God/issues/5))
+- **Fixed**: App no longer gets stuck on "Rate limited" screen after `claude login` ([#5](https://github.com/Usagelevel/Claude-Usage-Level/issues/5))
 - **Fixed**: Credential changes now trigger auto-refresh even when an error is displayed
 
 ### v2.20.1
