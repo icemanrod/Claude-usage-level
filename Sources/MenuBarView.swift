@@ -1058,6 +1058,32 @@ struct MenuBarView: View {
                                 .frame(width: 210)
                                 .controlSize(.mini)
                             }
+
+                            // Live metrics for the selected trend range
+                            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                                Text(formatCost(trendTotalCost))
+                                    .font(.system(size: 18, weight: .bold, design: .monospaced))
+                                Text("\(trendTotalMessages) msgs")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                if let span = trendSpanLabel {
+                                    Text(span)
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            HStack(spacing: 8) {
+                                Text("\(trendSlice.count) active days")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.secondary.opacity(0.8))
+                                if trendSlice.count > 0 {
+                                    Text("·  \(formatCost(trendTotalCost / Double(trendSlice.count)))/day avg")
+                                        .font(.system(size: 10))
+                                        .foregroundColor(.secondary.opacity(0.8))
+                                }
+                            }
+
                             SparklineView(
                                 data: Array(manager.historyStats.daily.prefix(trendRange).reversed().map(\.cost)),
                                 labels: Array(manager.historyStats.daily.prefix(trendRange).reversed().map(\.dateLabel))
@@ -1543,6 +1569,21 @@ struct MenuBarView: View {
 
     private var displayedDaily: [DailyUsage] {
         Array(manager.historyStats.daily.prefix(dailyRange))
+    }
+    private var trendSlice: [DailyUsage] {
+        Array(manager.historyStats.daily.prefix(trendRange))
+    }
+    private var trendTotalCost: Double {
+        trendSlice.reduce(0) { $0 + $1.cost }
+    }
+    private var trendTotalMessages: Int {
+        trendSlice.reduce(0) { $0 + $1.messageCount }
+    }
+    private var trendSpanLabel: String? {
+        // daily is newest-first, so .last is the oldest day in the slice
+        guard let newest = trendSlice.first?.date, let oldest = trendSlice.last?.date else { return nil }
+        let f = SessionAnalyzer.dayLabelFormatter
+        return "\(f.string(from: oldest)) – \(f.string(from: newest))"
     }
     private var displayedWeekly: [PeriodBucket] {
         SessionAnalyzer.weeklyBuckets(from: displayedDaily)

@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.25.2] - 2026-06-19
+
+### Added
+- **Usage Trend now shows live metrics** — the trend card displays the selected range's total cost, message count, active-day count, average $/day, and date span, all updating with the 7d/14d/30d/90d/6M picker. Previously the card was a bare sparkline with no numbers.
+
 ## [2.25.1] - 2026-06-19
 
 ### Added
