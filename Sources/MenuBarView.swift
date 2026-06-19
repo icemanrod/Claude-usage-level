@@ -26,6 +26,7 @@ struct MenuBarView: View {
     @State private var memorySection: MemorySection = .list
     @State private var selectedMonth: PeriodBucket?
     @AppStorage(UDKey.dailyRange) private var dailyRange: Int = 7
+    @AppStorage(UDKey.trendRange) private var trendRange: Int = 30
 
     var body: some View {
         VStack(spacing: 0) {
@@ -1045,13 +1046,21 @@ struct MenuBarView: View {
                             HStack {
                                 SHLabel("Usage Trend")
                                 Spacer()
-                                Text(rangeLabel)
-                                    .font(.system(size: 11))
-                                    .foregroundColor(.secondary)
+                                Picker("Trend Range", selection: $trendRange) {
+                                    Text("7d").tag(7)
+                                    Text("14d").tag(14)
+                                    Text("30d").tag(30)
+                                    Text("90d").tag(90)
+                                    Text("6M").tag(180)
+                                }
+                                .labelsHidden()
+                                .pickerStyle(.segmented)
+                                .frame(width: 210)
+                                .controlSize(.mini)
                             }
                             SparklineView(
-                                data: Array(manager.historyStats.daily.prefix(dailyRange).reversed().map(\.cost)),
-                                labels: Array(manager.historyStats.daily.prefix(dailyRange).reversed().map(\.dateLabel))
+                                data: Array(manager.historyStats.daily.prefix(trendRange).reversed().map(\.cost)),
+                                labels: Array(manager.historyStats.daily.prefix(trendRange).reversed().map(\.dateLabel))
                             )
                             .frame(height: 50)
                         }
@@ -1546,13 +1555,6 @@ struct MenuBarView: View {
         case 0...30: return displayedDaily.map(\.cost).max() ?? 1
         case 90:     return displayedWeekly.map(\.cost).max() ?? 1
         default:     return displayedMonthly.map(\.cost).max() ?? 1
-        }
-    }
-    private var rangeLabel: String {
-        switch dailyRange {
-        case 90:  return "90 days"
-        case 180: return "6 months"
-        default:  return "\(dailyRange) days"
         }
     }
 

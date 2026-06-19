@@ -14,6 +14,7 @@ enum UDKey {
     static let menuBarDisplayMode = "menuBarDisplayMode"
     static let dailyBudget = "dailyBudget"
     static let dailyRange = "dailyRange"
+    static let trendRange = "trendRange"
     static let projectBudgets = "projectBudgets"
     static let customAlertRules = "customAlertRules"
     static let sessionAnnotations = "sessionAnnotations"

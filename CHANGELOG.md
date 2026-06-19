@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.25.1] - 2026-06-19
+
+### Added
+- **Usage Trend range selector** — the Usage Trend sparkline now has its own 7d / 14d / 30d / 90d / 6M picker, independent from the breakdown card below, so you can view the trend up to 6 months back while keeping the breakdown at a different range.
+
 ## [2.25.0] - 2026-06-19
 
 ### Added
