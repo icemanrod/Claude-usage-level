@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.25.0] - 2026-06-19
+
+### Added
+- **6-month history** — the Analytics range selector now goes 7d / 14d / 30d / 90d / **6M**. Long ranges aggregate the breakdown so it stays readable: 90d shows weekly bars, 6M shows monthly bars, while the trend sparkline always plots the full daily curve.
+- **Month drill-down** — click any month in the 6M view to open a detail screen with that month's total, a daily-trend sparkline, and a day-by-day breakdown.
+
 ## [2.24.0] - 2026-06-19
 
 ### Changed
