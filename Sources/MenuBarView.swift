@@ -24,7 +24,7 @@ struct MenuBarView: View {
     @State private var extensionsSection: ExtensionsSection = .discover
     @State private var openPluginDetail: String?  // plugin id for detail view (e.g. "claude-mem@thedotmack")
     @State private var memorySection: MemorySection = .list
-    @State private var selectedMonth: SessionAnalyzer.PeriodBucket?
+    @State private var selectedMonth: PeriodBucket?
     @AppStorage(UDKey.dailyRange) private var dailyRange: Int = 7
 
     var body: some View {
@@ -1354,7 +1354,7 @@ struct MenuBarView: View {
     }
 
     @ViewBuilder
-    private func monthDetailView(_ bucket: SessionAnalyzer.PeriodBucket) -> some View {
+    private func monthDetailView(_ bucket: PeriodBucket) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
                 SHButton(label: "Back", icon: "chevron.left", style: .outline) {
@@ -1535,10 +1535,10 @@ struct MenuBarView: View {
     private var displayedDaily: [DailyUsage] {
         Array(manager.historyStats.daily.prefix(dailyRange))
     }
-    private var displayedWeekly: [SessionAnalyzer.PeriodBucket] {
+    private var displayedWeekly: [PeriodBucket] {
         SessionAnalyzer.weeklyBuckets(from: displayedDaily)
     }
-    private var displayedMonthly: [SessionAnalyzer.PeriodBucket] {
+    private var displayedMonthly: [PeriodBucket] {
         SessionAnalyzer.monthlyBuckets(from: displayedDaily)
     }
     private var displayedMax: Double {
