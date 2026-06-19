@@ -24,6 +24,7 @@ struct MenuBarView: View {
     @State private var extensionsSection: ExtensionsSection = .discover
     @State private var openPluginDetail: String?  // plugin id for detail view (e.g. "claude-mem@thedotmack")
     @State private var memorySection: MemorySection = .list
+    @State private var selectedMonth: SessionAnalyzer.PeriodBucket?
     @AppStorage(UDKey.dailyRange) private var dailyRange: Int = 7
 
     var body: some View {
@@ -96,6 +97,7 @@ struct MenuBarView: View {
                height: manager.windowHeight)
         .background(WindowTopAnchor(height: manager.windowHeight))
         .animation(.easeOut(duration: 0.15), value: manager.selectedTab)
+        .onChange(of: manager.selectedTab) { _ in selectedMonth = nil }
         .animation(.easeOut(duration: 0.15), value: manager.showSettings)
         .onAppear {
             manager.refreshIfStale()
@@ -982,7 +984,9 @@ struct MenuBarView: View {
 
     private var statsView: some View {
         VStack(spacing: 10) {
-            if manager.monthStats.totalMessages == 0 {
+            if let month = selectedMonth {
+                monthDetailView(month)
+            } else if manager.monthStats.totalMessages == 0 {
                 VStack(spacing: 10) {
                     Image(systemName: "chart.bar")
                         .font(.system(size: 24, weight: .medium))
@@ -1035,19 +1039,19 @@ struct MenuBarView: View {
                 }
 
                 // Sparkline
-                if manager.monthStats.daily.count >= 2 {
+                if manager.historyStats.daily.count >= 2 {
                     SHCard {
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
                                 SHLabel("Usage Trend")
                                 Spacer()
-                                Text("\(dailyRange) days")
+                                Text(rangeLabel)
                                     .font(.system(size: 11))
                                     .foregroundColor(.secondary)
                             }
                             SparklineView(
-                                data: Array(manager.monthStats.daily.prefix(dailyRange).reversed().map(\.cost)),
-                                labels: Array(manager.monthStats.daily.prefix(dailyRange).reversed().map(\.dateLabel))
+                                data: Array(manager.historyStats.daily.prefix(dailyRange).reversed().map(\.cost)),
+                                labels: Array(manager.historyStats.daily.prefix(dailyRange).reversed().map(\.dateLabel))
                             )
                             .frame(height: 50)
                         }
@@ -1242,46 +1246,65 @@ struct MenuBarView: View {
                     }
                 }
 
-                // Daily with period selector
-                if !manager.monthStats.daily.isEmpty {
+                // Daily / weekly / monthly with range selector
+                if !manager.historyStats.daily.isEmpty {
                     SHCard {
                         VStack(alignment: .leading, spacing: 6) {
                             HStack {
-                                SHLabel("Daily")
+                                SHLabel(dailyRange <= 30 ? "Daily" : dailyRange == 90 ? "Weekly" : "Monthly")
                                 Spacer()
                                 Picker("Range", selection: $dailyRange) {
                                     Text("7d").tag(7)
                                     Text("14d").tag(14)
                                     Text("30d").tag(30)
+                                    Text("90d").tag(90)
+                                    Text("6M").tag(180)
                                 }
                                 .labelsHidden()
                                 .pickerStyle(.segmented)
-                                .frame(width: 120)
+                                .frame(width: 210)
                                 .controlSize(.mini)
                             }
-                            ForEach(manager.monthStats.daily.prefix(dailyRange)) { day in
-                                HStack(spacing: 6) {
-                                    Text(day.dateLabel)
-                                        .font(.system(size: 11, weight: .medium))
-                                        .foregroundColor(.secondary)
-                                        .frame(width: 60, alignment: .leading)
 
-                                    GeometryReader { geo in
-                                        ZStack(alignment: .leading) {
-                                            RoundedRectangle(cornerRadius: 2)
-                                                .fill(Theme.muted)
-                                            RoundedRectangle(cornerRadius: 2)
-                                                .fill(Theme.accent.opacity(0.5))
-                                                .frame(width: max(0, geo.size.width * CGFloat(day.cost / maxDailyCost)))
+                            if dailyRange <= 30 {
+                                ForEach(displayedDaily) { day in
+                                    breakdownBar(
+                                        label: day.dateLabel,
+                                        cost: day.cost,
+                                        sub: "\(day.dateLabel): \(formatCost(day.cost)) · \(day.messageCount) msgs · \(formatTokens(day.tokens.totalTokens)) tokens",
+                                        maxCost: displayedMax
+                                    )
+                                }
+                            } else if dailyRange == 90 {
+                                ForEach(displayedWeekly) { bucket in
+                                    breakdownBar(
+                                        label: bucket.label,
+                                        cost: bucket.cost,
+                                        sub: "\(bucket.label): \(formatCost(bucket.cost)) · \(bucket.messageCount) msgs",
+                                        maxCost: displayedMax,
+                                        labelWidth: 88
+                                    )
+                                }
+                            } else {
+                                ForEach(displayedMonthly) { bucket in
+                                    Button {
+                                        selectedMonth = bucket
+                                    } label: {
+                                        HStack(spacing: 6) {
+                                            breakdownBar(
+                                                label: bucket.label,
+                                                cost: bucket.cost,
+                                                sub: "\(bucket.label): \(formatCost(bucket.cost)) · \(bucket.messageCount) msgs — click to break down",
+                                                maxCost: displayedMax,
+                                                labelWidth: 72
+                                            )
+                                            Image(systemName: "chevron.right")
+                                                .font(.system(size: 9, weight: .semibold))
+                                                .foregroundColor(.secondary)
                                         }
                                     }
-                                    .frame(height: 5)
-
-                                    Text(formatCost(day.cost))
-                                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                                        .frame(width: 46, alignment: .trailing)
+                                    .buttonStyle(.plain)
                                 }
-                                .help("\(day.dateLabel): \(formatCost(day.cost)) · \(day.messageCount) msgs · \(formatTokens(day.tokens.totalTokens)) tokens")
                             }
                         }
                     }
@@ -1324,6 +1347,52 @@ struct MenuBarView: View {
                     }
 
                     Spacer()
+                }
+            }
+        }
+        .onChange(of: dailyRange) { _ in selectedMonth = nil }
+    }
+
+    @ViewBuilder
+    private func monthDetailView(_ bucket: SessionAnalyzer.PeriodBucket) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                SHButton(label: "Back", icon: "chevron.left", style: .outline) {
+                    selectedMonth = nil
+                }
+                Spacer()
+                Text(bucket.label)
+                    .font(.system(size: 13, weight: .semibold))
+            }
+
+            HStack(spacing: 6) {
+                SHStatCard(label: "Total", value: formatCost(bucket.cost), sub: "\(bucket.messageCount) msgs")
+            }
+
+            if bucket.days.count >= 2 {
+                SHCard {
+                    VStack(alignment: .leading, spacing: 8) {
+                        SHLabel("Daily Trend")
+                        SparklineView(
+                            data: bucket.days.reversed().map(\.cost),
+                            labels: bucket.days.reversed().map(\.dateLabel)
+                        )
+                        .frame(height: 50)
+                    }
+                }
+            }
+
+            SHCard {
+                VStack(alignment: .leading, spacing: 6) {
+                    SHLabel("Daily")
+                    ForEach(bucket.days) { day in
+                        breakdownBar(
+                            label: day.dateLabel,
+                            cost: day.cost,
+                            sub: "\(day.dateLabel): \(formatCost(day.cost)) · \(day.messageCount) msgs",
+                            maxCost: bucket.days.map(\.cost).max() ?? 1
+                        )
+                    }
                 }
             }
         }
@@ -1463,8 +1532,55 @@ struct MenuBarView: View {
         manager.monthStats.aggregatedModels
     }
 
-    private var maxDailyCost: Double {
-        manager.monthStats.daily.prefix(dailyRange).map(\.cost).max() ?? 1
+    private var displayedDaily: [DailyUsage] {
+        Array(manager.historyStats.daily.prefix(dailyRange))
+    }
+    private var displayedWeekly: [SessionAnalyzer.PeriodBucket] {
+        SessionAnalyzer.weeklyBuckets(from: displayedDaily)
+    }
+    private var displayedMonthly: [SessionAnalyzer.PeriodBucket] {
+        SessionAnalyzer.monthlyBuckets(from: displayedDaily)
+    }
+    private var displayedMax: Double {
+        switch dailyRange {
+        case 0...30: return displayedDaily.map(\.cost).max() ?? 1
+        case 90:     return displayedWeekly.map(\.cost).max() ?? 1
+        default:     return displayedMonthly.map(\.cost).max() ?? 1
+        }
+    }
+    private var rangeLabel: String {
+        switch dailyRange {
+        case 90:  return "90 days"
+        case 180: return "6 months"
+        default:  return "\(dailyRange) days"
+        }
+    }
+
+    @ViewBuilder
+    private func breakdownBar(label: String, cost: Double, sub: String, maxCost: Double, labelWidth: CGFloat = 60) -> some View {
+        HStack(spacing: 6) {
+            Text(label)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.secondary)
+                .frame(width: labelWidth, alignment: .leading)
+                .lineLimit(1)
+
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(Theme.muted)
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(Theme.accent.opacity(0.5))
+                        .frame(width: max(0, geo.size.width * CGFloat(maxCost > 0 ? cost / maxCost : 0)))
+                }
+            }
+            .frame(height: 5)
+
+            Text(formatCost(cost))
+                .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                .frame(width: 46, alignment: .trailing)
+        }
+        .help(sub)
     }
 
     // MARK: - Timeline
