@@ -273,6 +273,7 @@ class UsageManager: ObservableObject {
     @Published var todayStats = UsageStats()
     @Published var weekStats = UsageStats()
     @Published var monthStats = UsageStats()
+    @Published var historyStats = UsageStats()  // up to 180 days, for long-range trend + month drill-down
     enum Tab: Int { case usage, analytics, timeline, roi, extensions }
     @Published var selectedTab: Tab = .usage
     @Published var isLoadingStats = false
@@ -738,6 +739,7 @@ class UsageManager: ObservableObject {
     private static let resetDetectionLow: Double = 10
     private static let recentSessionsLimit = 15
     private static let statsWindowDays = 30
+    private static let historyWindowDays = 180
 
     private var rateLimitedUntil: Date?
     private var consecutive429Count = 0
@@ -929,6 +931,7 @@ class UsageManager: ObservableObject {
             let todayStart = cal.startOfDay(for: now)
             let weekStart = cal.date(byAdding: .day, value: -7, to: now) ?? now
             let monthStart = cal.date(byAdding: .day, value: -Self.statsWindowDays, to: now) ?? now
+            let historyStart = cal.date(byAdding: .day, value: -Self.historyWindowDays, to: now) ?? now
 
             // Single pass: analyze + collect recent sessions together
             let result = SessionAnalyzer.analyzeWithSessions(since: monthStart, recentLimit: Self.recentSessionsLimit)
@@ -936,10 +939,14 @@ class UsageManager: ObservableObject {
             let week = month.filtered(since: weekStart)
             let today = month.filtered(since: todayStart)
 
+            // Wider 180-day pass for the long-range trend + month drill-down (aggregate daily only)
+            let history = SessionAnalyzer.analyzeWithSessions(since: historyStart, recentLimit: 0).stats
+
             DispatchQueue.main.async {
                 self?.todayStats = today
                 self?.weekStats = week
                 self?.monthStats = month
+                self?.historyStats = history
                 self?.sessionHistory = result.recentSessions
                 self?.isLoadingStats = false
                 self?.lastStatsRefresh = Date()
